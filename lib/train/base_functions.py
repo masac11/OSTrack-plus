@@ -7,6 +7,7 @@ from lib.train.data import sampler, opencv_loader, processing, LTRLoader
 import lib.train.data.transforms as tfm
 from lib.utils.misc import is_main_process
 # from lib.train.dataset.fe108_neg import FE108Neg
+from lib.train.dataset.fe108 import FE108
 from lib.train.dataset.fe108_rgb import FE108Rgb
 from lib.train.dataset.fe108_stack import FE108Stack
 
@@ -33,7 +34,9 @@ def names2datasets(name_list: list, settings, image_loader):
     datasets = []
     for name in name_list:
         assert name in ["LASOT", "GOT10K_vottrain", "GOT10K_votval", "GOT10K_train_full", "GOT10K_official_val",
-                        "COCO17", "VID", "TRACKINGNET", "FE108Stack", "FE108Pos", "FE108Neg", "FE108Rgb"]
+                        "COCO17", "VID", "TRACKINGNET", "FE108Stack", "FE108Pos", "FE108Neg", "FE108Rgb", "FE108"]
+        if name == "FE108":
+            datasets.append(FE108(settings.env.fe108_dir, split='train', image_loader=image_loader))
         if name == "FE108Stack":
             datasets.append(FE108Stack(settings.env.fe108_stack_dir, split='train', image_loader=image_loader))
         if name == "FE108Rgb":

@@ -93,52 +93,64 @@ class STARKProcessing(BaseProcessing):
         """
         # Apply joint transforms
         if self.transform['joint'] is not None:
+            data['template_event'], data['template_anno'], data['template_masks'] = self.transform['joint'](
+                image=data['template_event'], bbox=data['template_anno'], mask=data['template_masks'])
+            data['search_event'], data['search_anno'], data['search_masks'] = self.transform['joint'](
+                image=data['search_event'], bbox=data['search_anno'], mask=data['search_masks'], new_roll=False)
+
             data['template_images'], data['template_anno'], data['template_masks'] = self.transform['joint'](
                 image=data['template_images'], bbox=data['template_anno'], mask=data['template_masks'])
             data['search_images'], data['search_anno'], data['search_masks'] = self.transform['joint'](
                 image=data['search_images'], bbox=data['search_anno'], mask=data['search_masks'], new_roll=False)
 
         for s in ['template', 'search']:
-            assert self.mode == 'sequence' or len(data[s + '_images']) == 1, \
+           for suffix in ['_event', '_images']:
+                assert self.mode == 'sequence' or len(data[s + suffix]) == 1, \
                 "In pair mode, num train/test frames must be 1"
 
-            # Add a uniform noise to the center pos
-            jittered_anno = [self._get_jittered_box(a, s) for a in data[s + '_anno']]
+                # Add a uniform noise to the center pos
+                # 应该以event为基准
+                if suffix != '_images':
+                    jittered_anno = [self._get_jittered_box(a, s) for a in data[s + '_anno']]
 
-            # 2021.1.9 Check whether data is valid. Avoid too small bounding boxes
-            w, h = torch.stack(jittered_anno, dim=0)[:, 2], torch.stack(jittered_anno, dim=0)[:, 3]
+                # 2021.1.9 Check whether data is valid. Avoid too small bounding boxes
+                w, h = torch.stack(jittered_anno, dim=0)[:, 2], torch.stack(jittered_anno, dim=0)[:, 3]
 
-            crop_sz = torch.ceil(torch.sqrt(w * h) * self.search_area_factor[s])
-            if (crop_sz < 1).any():
-                data['valid'] = False
-                # print("Too small box is found. Replace it with new data.")
-                return data
-
-            # Crop image region centered at jittered_anno box and get the attention mask
-            crops, boxes, att_mask, mask_crops = prutils.jittered_center_crop(data[s + '_images'], jittered_anno,
-                                                                              data[s + '_anno'], self.search_area_factor[s],
-                                                                              self.output_sz[s], masks=data[s + '_masks'])
-            # Apply transforms
-            data[s + '_images'], data[s + '_anno'], data[s + '_att'], data[s + '_masks'] = self.transform[s](
-                image=crops, bbox=boxes, att=att_mask, mask=mask_crops, joint=False)
-
-            # 2021.1.9 Check whether elements in data[s + '_att'] is all 1
-            # Note that type of data[s + '_att'] is tuple, type of ele is torch.tensor
-            for ele in data[s + '_att']:
-                if (ele == 1).all():
+                crop_sz = torch.ceil(torch.sqrt(w * h) * self.search_area_factor[s])
+                if (crop_sz < 1).any():
                     data['valid'] = False
-                    # print("Values of original attention mask are all one. Replace it with new data.")
+                    # print("Too small box is found. Replace it with new data.")
                     return data
-            # 2021.1.10 more strict conditions: require the donwsampled masks not to be all 1
-            for ele in data[s + '_att']:
-                feat_size = self.output_sz[s] // 16  # 16 is the backbone stride
-                # (1,1,128,128) (1,1,256,256) --> (1,1,8,8) (1,1,16,16)
-                mask_down = F.interpolate(ele[None, None].float(), size=feat_size).to(torch.bool)[0]
-                if (mask_down == 1).all():
-                    data['valid'] = False
-                    # print("Values of down-sampled attention mask are all one. "
-                    #       "Replace it with new data.")
-                    return data
+
+                # Crop image region centered at jittered_anno box and get the attention mask
+                crops, boxes, att_mask, mask_crops = prutils.jittered_center_crop(data[s + suffix], jittered_anno,
+                                                                                data[s + '_anno'], self.search_area_factor[s],
+                                                                                self.output_sz[s], masks=data[s + '_masks'])
+                # Apply transforms
+                if suffix != '_images':
+                    data[s + suffix], data[s + '_anno'], data[s + '_att'], data[s + '_masks'] = self.transform[s](
+                        image=crops, bbox=boxes, att=att_mask, mask=mask_crops, joint=False)
+                else:
+                    data[s + suffix], _, _, _ = self.transform[s](
+                        image=crops, bbox=boxes, att=att_mask, mask=mask_crops, joint=False)
+
+                # 2021.1.9 Check whether elements in data[s + '_att'] is all 1
+                # Note that type of data[s + '_att'] is tuple, type of ele is torch.tensor
+                for ele in data[s + '_att']:
+                    if (ele == 1).all():
+                        data['valid'] = False
+                        # print("Values of original attention mask are all one. Replace it with new data.")
+                        return data
+                # 2021.1.10 more strict conditions: require the donwsampled masks not to be all 1
+                for ele in data[s + '_att']:
+                    feat_size = self.output_sz[s] // 16  # 16 is the backbone stride
+                    # (1,1,128,128) (1,1,256,256) --> (1,1,8,8) (1,1,16,16)
+                    mask_down = F.interpolate(ele[None, None].float(), size=feat_size).to(torch.bool)[0]
+                    if (mask_down == 1).all():
+                        data['valid'] = False
+                        # print("Values of down-sampled attention mask are all one. "
+                        #       "Replace it with new data.")
+                        return data
 
         data['valid'] = True
         # if we use copy-and-paste augmentation
@@ -150,5 +162,6 @@ class STARKProcessing(BaseProcessing):
             data = data.apply(stack_tensors)
         else:
             data = data.apply(lambda x: x[0] if isinstance(x, list) else x)
-
+        print("Data is valid.")
+        print(data)
         return data

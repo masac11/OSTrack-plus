@@ -146,8 +146,8 @@ class TrackingSampler(torch.utils.data.Dataset):
                 template_frame_ids = [1] * self.num_template_frames
                 search_frame_ids = [1] * self.num_search_frames
             try:
-                template_frames, template_anno, meta_obj_train = dataset.get_frames(seq_id, template_frame_ids, seq_info_dict)
-                search_frames, search_anno, meta_obj_test = dataset.get_frames(seq_id, search_frame_ids, seq_info_dict)
+                template_frames, template_anno, template_event_frames = dataset.get_frames(seq_id, template_frame_ids, seq_info_dict)
+                search_frames, search_anno, search_event_frames = dataset.get_frames(seq_id, search_frame_ids, seq_info_dict)
 
                 H, W, _ = template_frames[0].shape
                 template_masks = template_anno['mask'] if 'mask' in template_anno else [torch.zeros((H, W))] * self.num_template_frames
@@ -167,7 +167,9 @@ class TrackingSampler(torch.utils.data.Dataset):
                     'search_images': search_frames,
                     'search_anno': search_anno['bbox'],
                     'search_masks': search_masks,
-                    'dataset': dataset.get_name()})
+                    'dataset': dataset.get_name(),
+                    'template_event': template_event_frames,
+                    'search_event': search_event_frames,})
                 # make data augmentation
                 data = self.processing(data)
 
