@@ -110,8 +110,8 @@ class STARKProcessing(BaseProcessing):
 
                 # Add a uniform noise to the center pos
                 # 应该以event为基准
-                if suffix != '_images':
-                    jittered_anno = [self._get_jittered_box(a, s) for a in data[s + '_anno']]
+                # if suffix != '_images':
+                jittered_anno = [self._get_jittered_box(a, s) for a in data[s + '_anno']]
 
                 # 2021.1.9 Check whether data is valid. Avoid too small bounding boxes
                 w, h = torch.stack(jittered_anno, dim=0)[:, 2], torch.stack(jittered_anno, dim=0)[:, 3]
@@ -162,6 +162,4 @@ class STARKProcessing(BaseProcessing):
             data = data.apply(stack_tensors)
         else:
             data = data.apply(lambda x: x[0] if isinstance(x, list) else x)
-        print("Data is valid.")
-        print(data)
         return data

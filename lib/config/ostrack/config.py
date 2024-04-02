@@ -16,7 +16,8 @@ cfg.MODEL.RETURN_STAGES = []
 
 # MODEL.BACKBONE
 cfg.MODEL.BACKBONE = edict()
-cfg.MODEL.BACKBONE.TYPE = "vit_base_patch16_224"
+cfg.MODEL.BACKBONE.TYPE = "vit_base_patch16_224_ce_s"
+cfg.MODEL.BACKBONE.TEACHER = "vit_base_patch16_224"
 cfg.MODEL.BACKBONE.STRIDE = 16
 cfg.MODEL.BACKBONE.MID_PE = False
 cfg.MODEL.BACKBONE.SEP_SEG = False

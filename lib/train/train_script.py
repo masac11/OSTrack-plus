@@ -55,7 +55,6 @@ def run(settings):
         net = build_ostrack(cfg)
     if settings.script_name == "ostrack-plus":
         net_teacher = build_ostrack_plus(cfg)
-        print(net_teacher)
         net = build_ostrack_plus_s(cfg)
     else:
         raise ValueError("illegal script name")

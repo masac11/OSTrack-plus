@@ -12,6 +12,7 @@ from torch.nn.modules.transformer import _get_clones
 from lib.models.layers.head import build_box_head
 from lib.models.ostrack.vit import vit_base_patch16_224
 from lib.models.ostrack.vit_ce import vit_large_patch16_224_ce, vit_base_patch16_224_ce
+from lib.models.ostrack.vit_ce_s import vit_base_patch16_224_ce_s
 from lib.utils.box_ops import box_xyxy_to_cxcywh
 
 
@@ -72,8 +73,8 @@ class OSTrackPlusS(nn.Module):
             pred_box, score_map = self.box_head(opt_feat, True)
             outputs_coord = box_xyxy_to_cxcywh(pred_box)
             outputs_coord_new = outputs_coord.view(bs, Nq, 4)
-            out = {'pred_boxes': outputs_coord_new,
-                   'score_map': score_map,
+            out = {'s_pred_boxes': outputs_coord_new,
+                   's_score_map': score_map,
                    }
             return out
 
@@ -83,8 +84,8 @@ class OSTrackPlusS(nn.Module):
             # outputs_coord = box_xyxy_to_cxcywh(bbox)
             outputs_coord = bbox
             outputs_coord_new = outputs_coord.view(bs, Nq, 4)
-            out = {'pred_boxes': outputs_coord_new,
-                   'score_map': score_map_ctr,
+            out = {'s_pred_boxes': outputs_coord_new,
+                   's_score_map': score_map_ctr,
                    'size_map': size_map,
                    'offset_map': offset_map}
             return out
@@ -107,6 +108,13 @@ def build_ostrack_plus_s(cfg, training=True):
 
     elif cfg.MODEL.BACKBONE.TYPE == 'vit_base_patch16_224_ce':
         backbone = vit_base_patch16_224_ce(pretrained, drop_path_rate=cfg.TRAIN.DROP_PATH_RATE,
+                                           ce_loc=cfg.MODEL.BACKBONE.CE_LOC,
+                                           ce_keep_ratio=cfg.MODEL.BACKBONE.CE_KEEP_RATIO,
+                                           )
+        hidden_dim = backbone.embed_dim
+        patch_start_index = 1
+    elif cfg.MODEL.BACKBONE.TYPE == 'vit_base_patch16_224_ce_s':
+        backbone = vit_base_patch16_224_ce_s(pretrained, drop_path_rate=cfg.TRAIN.DROP_PATH_RATE,
                                            ce_loc=cfg.MODEL.BACKBONE.CE_LOC,
                                            ce_keep_ratio=cfg.MODEL.BACKBONE.CE_KEEP_RATIO,
                                            )

@@ -28,10 +28,10 @@ class OSTrackPlusActor(BaseActor):
             status  -  dict containing detailed losses
         """
         # forward pass
-        out_dict, out_dict_s = self.forward_pass(data)
+        out_dict_t, out_dict_s = self.forward_pass(data)
 
         # compute losses
-        loss, status = self.compute_losses(out_dict, out_dict_s, data)
+        loss, status = self.compute_losses(out_dict_t, out_dict_s, data)
 
         return loss, status
 
@@ -71,7 +71,7 @@ class OSTrackPlusActor(BaseActor):
         if len(template_list) == 1:
             template_list = template_list[0]
 
-        out_dict = self.net_teacher(template=template_list,
+        out_dict_t = self.net_teacher(template=template_list,
                             search=search_img,
                             ce_template_mask=box_mask_z,
                             ce_keep_rate=ce_keep_rate,
@@ -83,16 +83,16 @@ class OSTrackPlusActor(BaseActor):
                             ce_keep_rate=ce_keep_rate,
                             return_last_attn=False)
 
-        return out_dict, out_dict_s
+        return out_dict_t, out_dict_s
 
-    def compute_losses(self, out_dict, out_dict_s, pred_dict, gt_dict, return_status=True):
+    def compute_losses(self, out_dict_t, out_dict_s, gt_dict, return_status=True):
         # gt gaussian map
         gt_bbox = gt_dict['search_anno'][-1]  # (Ns, batch, 4) (x1,y1,w,h) -> (batch, 4)
         gt_gaussian_maps = generate_heatmap(gt_dict['search_anno'], self.cfg.DATA.SEARCH.SIZE, self.cfg.MODEL.BACKBONE.STRIDE)
         gt_gaussian_maps = gt_gaussian_maps[-1].unsqueeze(1)
 
         # Get boxes
-        pred_boxes = pred_dict['pred_boxes']
+        pred_boxes = out_dict_s['s_pred_boxes']
         if torch.isnan(pred_boxes).any():
             raise ValueError("Network outputs is NAN! Stop Training")
         num_queries = pred_boxes.size(1)
@@ -107,8 +107,8 @@ class OSTrackPlusActor(BaseActor):
         # compute l1 loss
         l1_loss = self.objective['l1'](pred_boxes_vec, gt_boxes_vec)  # (BN,4) (BN,4)
         # compute location loss
-        if 'score_map' in pred_dict:
-            location_loss = self.objective['focal'](pred_dict['score_map'], gt_gaussian_maps)
+        if 's_score_map' in out_dict_s:
+            location_loss = self.objective['focal'](out_dict_s['s_score_map'], gt_gaussian_maps)
         else:
             location_loss = torch.tensor(0.0, device=l1_loss.device)
         # weighted sum
