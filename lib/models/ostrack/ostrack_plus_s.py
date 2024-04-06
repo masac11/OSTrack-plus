@@ -48,7 +48,8 @@ class OSTrackPlusS(nn.Module):
                                     ce_template_mask=ce_template_mask,
                                     ce_keep_rate=ce_keep_rate,
                                     return_last_attn=return_last_attn, )
-
+        backbone_feat = x
+        x = (x + aux_dict['auxiliary_output']) / 2
         # Forward head
         feat_last = x
         if isinstance(x, list):
@@ -56,7 +57,7 @@ class OSTrackPlusS(nn.Module):
         out = self.forward_head(feat_last, None)
 
         out.update(aux_dict)
-        out['backbone_feat'] = x
+        out['backbone_feat'] = backbone_feat
         return out
 
     def forward_head(self, cat_feature, gt_score_map=None):
@@ -144,9 +145,11 @@ def build_ostrack_plus_s(cfg, training=True):
         head_type=cfg.MODEL.HEAD.TYPE,
     )
 
-    if 'OSTrack' in cfg.MODEL.PRETRAIN_FILE and training:
-        checkpoint = torch.load(cfg.MODEL.PRETRAIN_FILE, map_location="cpu")
-        missing_keys, unexpected_keys = model.load_state_dict(checkpoint["net"], strict=False)
-        print('Load pretrained model from: ' + cfg.MODEL.PRETRAIN_FILE)
+    if 'OSTrack' in cfg.MODEL.BACKBONE.STUDENT_PRETRAIN_FILE and training:
+        checkpoint = torch.load(cfg.MODEL.BACKBONE.STUDENT_PRETRAIN_FILE, map_location="cpu")
+        missing_keys, unexpected_keys = model.load_state_dict(checkpoint["net"], strict=False) 
+        print('Load pretrained model from: ' + cfg.MODEL.BACKBONE.STUDENT_PRETRAIN_FILE)
+        print('missing_keys:', missing_keys)
+        print('unexpected_keys:', unexpected_keys)
 
     return model

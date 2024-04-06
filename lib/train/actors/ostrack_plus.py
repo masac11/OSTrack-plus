@@ -5,7 +5,8 @@ import torch
 from lib.utils.merge import merge_template_search
 from ...utils.heapmap_utils import generate_heatmap
 from ...utils.ce_utils import generate_mask_cond, adjust_keep_rate
-
+import torch.nn.functional as F
+import torch.nn as nn
 
 class OSTrackPlusActor(BaseActor):
     """ Actor for training OSTrack models """
@@ -48,11 +49,18 @@ class OSTrackPlusActor(BaseActor):
                                                              *data['template_images'].shape[2:])  # (batch, 3, 128, 128)
             # template_att_i = data['template_att'][i].view(-1, *data['template_att'].shape[2:])  # (batch, 128, 128)
             template_list.append(template_img_i)
+        
+        template_event_list = []
+        for i in range(self.settings.num_template):
+            template_img_i = data['template_event'][i].view(-1,
+                                                             *data['template_event'].shape[2:])  # (batch, 3, 128, 128)
+            # template_att_i = data['template_att'][i].view(-1, *data['template_att'].shape[2:])  # (batch, 128, 128)
+            template_event_list.append(template_img_i)
 
         search_img = data['search_images'][0].view(-1, *data['search_images'].shape[2:])  # (batch, 3, 320, 320)
         # search_att = data['search_att'][0].view(-1, *data['search_att'].shape[2:])  # (batch, 320, 320)
 
-        template_event = data['template_event'][0].view(-1, *data['template_event'].shape[2:])
+        # template_event = data['template_event'][0].view(-1, *data['template_event'].shape[2:])
         search_event = data['search_event'][0].view(-1, *data['search_event'].shape[2:])
 
         box_mask_z = None
@@ -70,6 +78,7 @@ class OSTrackPlusActor(BaseActor):
 
         if len(template_list) == 1:
             template_list = template_list[0]
+            template_event_list = template_event_list[0]
 
         out_dict_t = self.net_teacher(template=template_list,
                             search=search_img,
@@ -77,12 +86,11 @@ class OSTrackPlusActor(BaseActor):
                             ce_keep_rate=ce_keep_rate,
                             return_last_attn=False)
             
-        out_dict_s = self.net(template=template_list,
-                            search=search_img,
+        out_dict_s = self.net(template=template_event_list,
+                            search=search_event,
                             ce_template_mask=box_mask_z,
                             ce_keep_rate=ce_keep_rate,
                             return_last_attn=False)
-
         return out_dict_t, out_dict_s
 
     def compute_losses(self, out_dict_t, out_dict_s, gt_dict, return_status=True):
@@ -111,8 +119,26 @@ class OSTrackPlusActor(BaseActor):
             location_loss = self.objective['focal'](out_dict_s['s_score_map'], gt_gaussian_maps)
         else:
             location_loss = torch.tensor(0.0, device=l1_loss.device)
+                # Distill loss
+
+
+        temp = 2
+        ################################# compute feature distilled loss ###########################################
+        student_feature = out_dict_s['s_patched_x'] 
+        teacher_feature = out_dict_t['t_patched_x'] 
+
+        Mse_loss =  F.mse_loss(student_feature, teacher_feature, reduction='mean')  # * 1
+        
+        ################################## compute Similarity Matrix distilled loss ################################
+        attn_teacher = out_dict_t['backbone_feat']       
+        attn_student = out_dict_s['backbone_feat']   
+
+        l2_loss = torch.mean(torch.nn.PairwiseDistance(p=2)(attn_student.float(), attn_teacher.float())) * 0.7 # * 10 
+
+
+
         # weighted sum
-        loss = self.loss_weight['giou'] * giou_loss + self.loss_weight['l1'] * l1_loss + self.loss_weight['focal'] * location_loss
+        loss = self.loss_weight['giou'] * giou_loss + self.loss_weight['l1'] * l1_loss + self.loss_weight['focal'] * location_loss + l2_loss + Mse_loss
         if return_status:
             # status for log
             mean_iou = iou.detach().mean()

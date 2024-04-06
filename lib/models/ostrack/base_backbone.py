@@ -84,6 +84,9 @@ class BaseBackbone(nn.Module):
         self.pos_embed_z = nn.Parameter(template_patch_pos_embed)
         self.pos_embed_x = nn.Parameter(search_patch_pos_embed)
 
+        self.auxiliary_pos_embed_z = nn.Parameter(template_patch_pos_embed)
+        self.auxiliary_pos_embed_x = nn.Parameter(search_patch_pos_embed)
+
         # for cls token (keep it but not used)
         if self.add_cls_token and patch_start_index > 0:
             cls_pos_embed = self.pos_embed[:, 0:1, :]

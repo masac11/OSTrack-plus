@@ -132,6 +132,7 @@ class VisionTransformerCE(VisionTransformer):
             z += self.template_segment_pos_embed
 
         x = combine_tokens(z, x, mode=self.cat_mode)
+        t_patched_x = x
         if self.add_cls_token:
             x = torch.cat([cls_tokens, x], dim=1)
 
@@ -179,6 +180,7 @@ class VisionTransformerCE(VisionTransformer):
 
         aux_dict = {
             "attn": attn,
+            "t_patched_x": t_patched_x,
             "removed_indexes_s": removed_indexes_s,  # used for visualization
         }
 
@@ -195,7 +197,7 @@ class VisionTransformerCE(VisionTransformer):
 
 def _create_vision_transformer(pretrained=False, **kwargs):
     model = VisionTransformerCE(**kwargs)
-
+    print('Create Vision Transformer CE model with config: ', pretrained)
     if pretrained:
         if 'npz' in pretrained:
             model.load_pretrained(pretrained, prefix='')

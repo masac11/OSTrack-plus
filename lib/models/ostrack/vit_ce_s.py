@@ -13,7 +13,7 @@ from timm.models.layers import to_2tuple
 from lib.models.layers.patch_embed import PatchEmbed
 from .utils import combine_tokens, recover_tokens
 from .vit import VisionTransformer
-from ..layers.attn_blocks import CEBlock_s
+from ..layers.attn_blocks import CEBlock
 
 _logger = logging.getLogger(__name__)
 
@@ -70,6 +70,14 @@ class VisionTransformerCES(VisionTransformer):
 
         self.patch_embed = embed_layer(
             img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim)
+
+        self.auxiliary_patch_embed = embed_layer(
+            img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim)
+        self.auxiliary_net = nn.Sequential(
+            nn.Conv2d(embed_dim, embed_dim, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.BatchNorm2d(embed_dim),
+            nn.ReLU(),
+        )
         num_patches = self.patch_embed.num_patches
 
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
@@ -88,7 +96,7 @@ class VisionTransformerCES(VisionTransformer):
                 ce_index += 1
 
             blocks.append(
-                CEBlock_s(
+                CEBlock(
                     dim=embed_dim, num_heads=num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, drop=drop_rate,
                     attn_drop=attn_drop_rate, drop_path=dpr[i], norm_layer=norm_layer, act_layer=act_layer,
                     keep_ratio_search=ce_keep_ratio_i)
@@ -104,6 +112,10 @@ class VisionTransformerCES(VisionTransformer):
                          return_last_attn=False
                          ):
         B, H, W = x.shape[0], x.shape[2], x.shape[3]
+
+
+        auxiliary_x = self.auxiliary_patch_embed(x.clone().detach())
+        auxiliary_z = self.auxiliary_patch_embed(z.clone().detach())
 
         x = self.patch_embed(x)
         z = self.patch_embed(z)
@@ -126,6 +138,14 @@ class VisionTransformerCES(VisionTransformer):
 
         z += self.pos_embed_z
         x += self.pos_embed_x
+
+        auxiliary_z += self.auxiliary_pos_embed_z
+        auxiliary_x += self.auxiliary_pos_embed_x
+        auxiliary_input = torch.cat([auxiliary_z, auxiliary_x], dim=1)
+        s_patched_x = auxiliary_input
+        auxiliary_input = auxiliary_input.reshape(B, self.embed_dim, 16, 20)
+        auxiliary_output = self.auxiliary_net(auxiliary_input)
+        auxiliary_output = auxiliary_output.flatten(2).transpose(1, 2)
 
         if self.add_sep_seg:
             x += self.search_segment_pos_embed
@@ -179,6 +199,8 @@ class VisionTransformerCES(VisionTransformer):
 
         aux_dict = {
             "attn": attn,
+            "s_patched_x": s_patched_x,
+            "auxiliary_output": auxiliary_output,
             "removed_indexes_s": removed_indexes_s,  # used for visualization
         }
 
