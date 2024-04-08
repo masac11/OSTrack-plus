@@ -65,7 +65,10 @@ class LTRTrainer(BaseTrainer):
 
     def freeze_params_except_auxiliary(self, model, requires_grad=False):
         for name, param in model.named_parameters():
-            if not name.startswith('backbone.auxiliary') and param.requires_grad:
+            if not name.startswith('backbone.auxiliary') or not name.startswith("box_head"):
+                param.requires_grad = requires_grad
+    def freeze_params_all(self, model, requires_grad=False):
+        for name, param in model.named_parameters():
                 param.requires_grad = requires_grad
 
     def cycle_dataset(self, loader):
@@ -130,15 +133,16 @@ class LTRTrainer(BaseTrainer):
 
     def train_epoch(self):
         """Do one epoch for each loader."""
+        
         for loader in self.loaders:
             if self.epoch % loader.epoch_interval == 0:
                 # 2021.1.10 Set epoch
                 if isinstance(loader.sampler, DistributedSampler):
                     loader.sampler.set_epoch(self.epoch)
-                if self.epoch < 20:
-                    self.freeze_params_except_auxiliary(self.actor.net, requires_grad=False)
-                else:
-                    self.freeze_params_except_auxiliary(self.actor.net, requires_grad=True)
+                # if self.epoch < 20:
+                #     self.freeze_params_except_auxiliary(self.actor.net, requires_grad=False)
+                # else:
+                #     self.freeze_params_except_auxiliary(self.actor.net, requires_grad=True)
                 self.cycle_dataset(loader)
 
         self._stats_new_epoch()

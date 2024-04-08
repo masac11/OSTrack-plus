@@ -61,7 +61,7 @@ class OSTrackPlusActor(BaseActor):
         # search_att = data['search_att'][0].view(-1, *data['search_att'].shape[2:])  # (batch, 320, 320)
 
         # template_event = data['template_event'][0].view(-1, *data['template_event'].shape[2:])
-        search_event = data['search_event'][0].view(-1, *data['search_event'].shape[2:])
+        search_event_img = data['search_event'][0].view(-1, *data['search_event'].shape[2:])
 
         box_mask_z = None
         ce_keep_rate = None
@@ -87,7 +87,7 @@ class OSTrackPlusActor(BaseActor):
                             return_last_attn=False)
             
         out_dict_s = self.net(template=template_event_list,
-                            search=search_event,
+                            search=search_event_img,
                             ce_template_mask=box_mask_z,
                             ce_keep_rate=ce_keep_rate,
                             return_last_attn=False)
@@ -121,19 +121,16 @@ class OSTrackPlusActor(BaseActor):
             location_loss = torch.tensor(0.0, device=l1_loss.device)
                 # Distill loss
 
-
-        temp = 2
         ################################# compute feature distilled loss ###########################################
         student_feature = out_dict_s['s_patched_x'] 
         teacher_feature = out_dict_t['t_patched_x'] 
 
-        Mse_loss =  F.mse_loss(student_feature, teacher_feature, reduction='mean')  # * 1
+        l2_loss = torch.mean(torch.nn.PairwiseDistance(p=2)(student_feature.float(), teacher_feature.float())) * 0.7
         
         ################################## compute Similarity Matrix distilled loss ################################
         attn_teacher = out_dict_t['backbone_feat']       
         attn_student = out_dict_s['backbone_feat']   
-
-        l2_loss = torch.mean(torch.nn.PairwiseDistance(p=2)(attn_student.float(), attn_teacher.float())) * 0.7 # * 10 
+        Mse_loss =  F.mse_loss(attn_teacher, attn_student, reduction='mean')
 
 
 
@@ -146,6 +143,8 @@ class OSTrackPlusActor(BaseActor):
                       "Loss/giou": giou_loss.item(),
                       "Loss/l1": l1_loss.item(),
                       "Loss/location": location_loss.item(),
+                        "Loss/Mse": Mse_loss.item(),
+                        "Loss/l2": l2_loss.item(),
                       "IoU": mean_iou.item()}
             return loss, status
         else:

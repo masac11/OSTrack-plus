@@ -25,6 +25,8 @@ class EnvSettings:
         self.got_reports_path = ''
         self.tn_packed_results_path = ''
 
+        self.fe108_path = ''
+
 
 def create_default_local_file():
     comment = {'results_path': 'Where to store tracking results',

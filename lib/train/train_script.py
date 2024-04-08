@@ -53,7 +53,7 @@ def run(settings):
     # Create network
     if settings.script_name == "ostrack":
         net = build_ostrack(cfg)
-    if settings.script_name == "ostrack-plus":
+    elif settings.script_name == "ostrack-plus":
         net_teacher = build_ostrack_plus(cfg)
         net = build_ostrack_plus_s(cfg)
     else:
@@ -72,7 +72,7 @@ def run(settings):
     if settings.local_rank != -1:
         # net = torch.nn.SyncBatchNorm.convert_sync_batchnorm(net)  # add syncBN converter
         net = DDP(net, device_ids=[settings.local_rank], find_unused_parameters=True)
-        # net_teacher = DDP(net_teacher, device_ids=[settings.local_rank], find_unused_parameters=True)
+        net_teacher = DDP(net_teacher, device_ids=[settings.local_rank], find_unused_parameters=True)
         settings.device = torch.device("cuda:%d" % settings.local_rank)
     else:
         settings.device = torch.device("cuda:0")
