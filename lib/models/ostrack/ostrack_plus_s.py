@@ -145,11 +145,11 @@ def build_ostrack_plus_s(cfg, training=True):
         head_type=cfg.MODEL.HEAD.TYPE,
     )
 
-    if 'OSTrack' in cfg.MODEL.BACKBONE.STUDENT_PRETRAIN_FILE and training:
-        checkpoint = torch.load(cfg.MODEL.BACKBONE.STUDENT_PRETRAIN_FILE, map_location="cpu")
-        missing_keys, unexpected_keys = model.load_state_dict(checkpoint["net"], strict=False) 
-        print('Load pretrained model from: ' + cfg.MODEL.BACKBONE.STUDENT_PRETRAIN_FILE)
-        print('missing_keys:', missing_keys)
-        print('unexpected_keys:', unexpected_keys)
+    # if 'OSTrack' in cfg.MODEL.BACKBONE.STUDENT_PRETRAIN_FILE and training:
+    #     checkpoint = torch.load(cfg.MODEL.BACKBONE.STUDENT_PRETRAIN_FILE, map_location="cpu")
+    #     missing_keys, unexpected_keys = model.load_state_dict(checkpoint["net"], strict=False) 
+    #     print('Load pretrained model from: ' + cfg.MODEL.BACKBONE.STUDENT_PRETRAIN_FILE)
+    #     print('missing_keys:', missing_keys)
+    #     print('unexpected_keys:', unexpected_keys)
 
     return model

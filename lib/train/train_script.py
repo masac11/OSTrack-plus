@@ -53,7 +53,7 @@ def run(settings):
     # Create network
     if settings.script_name == "ostrack":
         net = build_ostrack(cfg)
-    elif settings.script_name == "ostrack-plus":
+    elif settings.script_name == "ostrack_plus":
         net_teacher = build_ostrack_plus(cfg)
         net = build_ostrack_plus_s(cfg)
     else:
@@ -85,7 +85,7 @@ def run(settings):
         objective = {'giou': giou_loss, 'l1': l1_loss, 'focal': focal_loss, 'cls': BCEWithLogitsLoss()}
         loss_weight = {'giou': cfg.TRAIN.GIOU_WEIGHT, 'l1': cfg.TRAIN.L1_WEIGHT, 'focal': 1., 'cls': 1.0}
         actor = OSTrackActor(net=net, objective=objective, loss_weight=loss_weight, settings=settings, cfg=cfg)
-    if settings.script_name == "ostrack-plus":
+    if settings.script_name == "ostrack_plus":
         focal_loss = FocalLoss()
         objective = {'giou': giou_loss, 'l1': l1_loss, 'focal': focal_loss, 'cls': BCEWithLogitsLoss()}
         loss_weight = {'giou': cfg.TRAIN.GIOU_WEIGHT, 'l1': cfg.TRAIN.L1_WEIGHT, 'focal': 1., 'cls': 1.0}
