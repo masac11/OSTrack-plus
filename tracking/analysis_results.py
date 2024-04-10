@@ -6,7 +6,7 @@ from lib.test.analysis.plot_results import plot_results, print_results, print_pe
 from lib.test.evaluation import get_dataset, trackerlist
 
 trackers = []
-dataset_name = 'lasot'
+dataset_name = 'fe108'
 """stark"""
 # trackers.extend(trackerlist(name='stark_s', parameter_name='baseline', dataset_name=dataset_name,
 #                             run_ids=None, display_name='STARK-S50'))
@@ -26,10 +26,10 @@ dataset_name = 'lasot'
 # trackers.extend(trackerlist('dimp', 'prdimp18', None, range(0,5), 'PrDiMP18'))
 # trackers.extend(trackerlist('dimp', 'prdimp50', None, range(0,5), 'PrDiMP50'))
 """ostrack"""
-trackers.extend(trackerlist(name='ostrack', parameter_name='vitb_256_mae_ce_32x4_ep300', dataset_name=dataset_name,
+trackers.extend(trackerlist(name='ostrack_plus', parameter_name='fe108_bs32_plus', dataset_name=dataset_name,
                             run_ids=None, display_name='OSTrack256'))
-trackers.extend(trackerlist(name='ostrack', parameter_name='vitb_384_mae_ce_32x4_ep300', dataset_name=dataset_name,
-                            run_ids=None, display_name='OSTrack384'))
+# trackers.extend(trackerlist(name='ostrack', parameter_name='vitb_384_mae_ce_32x4_ep300', dataset_name=dataset_name,
+#                             run_ids=None, display_name='OSTrack384'))
 
 
 dataset = get_dataset(dataset_name)
