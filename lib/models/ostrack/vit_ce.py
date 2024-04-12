@@ -204,7 +204,7 @@ def _create_vision_transformer(pretrained=False, **kwargs):
         else:
             checkpoint = torch.load(pretrained, map_location="cpu")
             missing_keys, unexpected_keys = model.load_state_dict(checkpoint["model"], strict=False)
-            print('Load pretrained model from: ' + pretrained)
+            print('Teacher Load pretrained model from: ' + pretrained)
 
     return model
 

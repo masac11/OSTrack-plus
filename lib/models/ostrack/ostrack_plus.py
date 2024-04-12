@@ -132,8 +132,8 @@ def build_ostrack_plus(cfg, training=True):
     if 'OSTrack' in cfg.MODEL.BACKBONE.TEACHER_PRETRAIN_FILE and training:
         checkpoint = torch.load(cfg.MODEL.BACKBONE.TEACHER_PRETRAIN_FILE, map_location="cpu")
         missing_keys, unexpected_keys = model.load_state_dict(checkpoint["net"], strict=False)
-        print('Load pretrained model from: ' + cfg.MODEL.BACKBONE.TEACHER_PRETRAIN_FILE)
-        print('missing_keys:', missing_keys)
-        print('unexpected_keys:', unexpected_keys)
+        print('Teacher Load pretrained model from: ' + cfg.MODEL.BACKBONE.TEACHER_PRETRAIN_FILE)
+        print('Teacher missing_keys:', missing_keys)
+        print('Teacher unexpected_keys:', unexpected_keys)
 
     return model

@@ -76,7 +76,7 @@ class VisionTransformerCES(VisionTransformer):
         self.auxiliary_net = nn.Sequential(
             nn.Conv2d(embed_dim, embed_dim, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm2d(embed_dim),
-            nn.ReLU(),
+            # nn.ReLU(),
         )
         num_patches = self.patch_embed.num_patches
 
@@ -224,7 +224,7 @@ def _create_vision_transformer(pretrained=False, **kwargs):
         else:
             checkpoint = torch.load(pretrained, map_location="cpu")
             missing_keys, unexpected_keys = model.load_state_dict(checkpoint["model"], strict=False)
-            print('Load pretrained model from: ' + pretrained)
+            print('Student Load pretrained model from: ' + pretrained)
 
     return model
 

@@ -39,8 +39,8 @@ MODEL:
   BACKBONE:
     TYPE: vit_base_patch16_224_ce_s
     TEACHER: vit_base_patch16_224_ce
-    TEACHER_PRETRAIN_FILE: "/data/yinhf/project/OSTrack/output/checkpoints/train/ostrack/fe108_rgb_bs32/OSTrack_ep0300.pth.tar"
-    STUDENT_PRETRAIN_FILE: "/data/yinhf/project/OSTrack/output/checkpoints/train/ostrack/fe108_stack_bs32/OSTrack_ep0300.pth.tar"
+    TEACHER_PRETRAIN_FILE: "/data/yinhf/project/OSTrack/output/checkpoints_old/train/ostrack/fe108_rgb_bs32/OSTrack_ep0300.pth.tar"
+    STUDENT_PRETRAIN_FILE: "/data/yinhf/project/OSTrack/output/checkpoints_old/train/ostrack/fe108_stack_bs32/OSTrack_ep0300.pth.tar"
     STRIDE: 16
     CE_LOC: [3, 6, 9]
     CE_KEEP_RATIO: [0.7, 0.7, 0.7]
