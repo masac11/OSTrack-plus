@@ -196,5 +196,6 @@ class FE108(BaseVideoDataset):
         anno_frames = {}
         for key, value in anno.items():
             anno_frames[key] = [value[f_id, ...].clone() for f_id in frame_ids]
-
-        return frame_list, anno_frames, frame_event_img_list
+        # 更改这俩顺序切换teacher student
+        # return frame_list, anno_frames, frame_event_img_list
+        return frame_event_img_list, anno_frames, frame_list

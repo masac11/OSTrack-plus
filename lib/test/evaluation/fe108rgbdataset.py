@@ -4,7 +4,7 @@ from lib.test.utils.load_text import load_text
 import os
 
 
-class FE108Dataset(BaseDataset):
+class FE108RgbDataset(BaseDataset):
     """ GOT-10k dataset.
 
     Publication:
@@ -34,7 +34,7 @@ class FE108Dataset(BaseDataset):
 
         ground_truth_rect = load_text(str(anno_path), delimiter=',', dtype=np.float64)
 
-        frames_path = '{}/{}/stack'.format(self.base_path, sequence_name)
+        frames_path = '{}/{}/img'.format(self.base_path, sequence_name)
         frame_list = [frame for frame in os.listdir(frames_path) if frame.endswith(".jpg")]
         frame_list.sort(key=lambda f: int(f[:-4]))
         frames_list = [os.path.join(frames_path, frame) for frame in frame_list]

@@ -37,7 +37,8 @@ MODEL:
   EXTRA_MERGER: False
   RETURN_INTER: False
   BACKBONE:
-    TYPE: vit_base_patch16_224_ce
+    TYPE: vit_base_patch16_224_ce_s
+    TEACHER: vit_base_patch16_224_ce
     STRIDE: 16
     CE_LOC: [3, 6, 9]
     CE_KEEP_RATIO: [0.7, 0.7, 0.7]

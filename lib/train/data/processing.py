@@ -98,10 +98,10 @@ class STARKProcessing(BaseProcessing):
             data['search_event'], data['search_anno'], data['search_masks'] = self.transform['joint'](
                 image=data['search_event'], bbox=data['search_anno'], mask=data['search_masks'], new_roll=False)
 
-            # data['template_images'], data['template_anno'], data['template_masks'] = self.transform['joint'](
-            #     image=data['template_images'], bbox=data['template_anno'], mask=data['template_masks'])
-            # data['search_images'], data['search_anno'], data['search_masks'] = self.transform['joint'](
-            #     image=data['search_images'], bbox=data['search_anno'], mask=data['search_masks'], new_roll=False)
+            data['template_images'], data['template_anno'], data['template_masks'] = self.transform['joint'](
+                image=data['template_images'], bbox=data['template_anno'], mask=data['template_masks'], new_roll=False)
+            data['search_images'], data['search_anno'], data['search_masks'] = self.transform['joint'](
+                image=data['search_images'], bbox=data['search_anno'], mask=data['search_masks'], new_roll=False)
 
         for s in ['template', 'search']:
             for suffix in ['_event', '_images']:

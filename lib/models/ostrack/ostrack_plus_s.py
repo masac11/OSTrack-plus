@@ -8,12 +8,13 @@ from typing import List
 import torch
 from torch import nn
 from torch.nn.modules.transformer import _get_clones
-
+from timm.models.layers import Mlp, DropPath, trunc_normal_, lecun_normal_
 from lib.models.layers.head import build_box_head
 from lib.models.ostrack.vit import vit_base_patch16_224
 from lib.models.ostrack.vit_ce import vit_large_patch16_224_ce, vit_base_patch16_224_ce
 from lib.models.ostrack.vit_ce_s import vit_base_patch16_224_ce_s
 from lib.utils.box_ops import box_xyxy_to_cxcywh
+from ..layers.attn_blocks import Block
 
 
 class OSTrackPlusS(nn.Module):
@@ -31,6 +32,14 @@ class OSTrackPlusS(nn.Module):
 
         self.aux_loss = aux_loss
         self.head_type = head_type
+        # 第一种
+        # self.fusion_block = Block(
+        #         dim=1536, num_heads=12, mlp_ratio=4., qkv_bias=True)
+        # self.mlp = Mlp(in_features=1536, hidden_features=6144, out_features=768)
+        # 第二种
+        self.fusion_block = Block(
+                dim=768, num_heads=12, mlp_ratio=4., qkv_bias=True)
+        
         if head_type == "CORNER" or head_type == "CENTER":
             self.feat_sz_s = int(box_head.feat_sz)
             self.feat_len_s = int(box_head.feat_sz ** 2)
@@ -48,7 +57,12 @@ class OSTrackPlusS(nn.Module):
                                     ce_template_mask=ce_template_mask,
                                     ce_keep_rate=ce_keep_rate,
                                     return_last_attn=return_last_attn, )
+        # 第二种
         x = (x + aux_dict['auxiliary_output']) / 2
+        # 第一种
+        # x = torch.cat((x, aux_dict['auxiliary_output']), dim=2)
+        x = self.fusion_block(x)
+        # x = self.mlp(x) 
         # Forward head
         feat_last = x
         if isinstance(x, list):

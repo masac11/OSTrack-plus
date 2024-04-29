@@ -7,7 +7,8 @@ DatasetInfo = namedtuple('DatasetInfo', ['module', 'class_name', 'kwargs'])
 pt = "lib.test.evaluation.%sdataset"  # Useful abbreviations to reduce the clutter
 
 dataset_dict = dict(
-    fe108=DatasetInfo(module=pt % "fe108", class_name="FE108Dataset", kwargs=dict(split='test')),
+    fe108rgb=DatasetInfo(module=pt % "fe108rgb", class_name="FE108RgbDataset", kwargs=dict(split='test')),
+    fe108stack=DatasetInfo(module=pt % "fe108stack", class_name="FE108StackDataset", kwargs=dict(split='test')),
     otb=DatasetInfo(module=pt % "otb", class_name="OTBDataset", kwargs=dict()),
     nfs=DatasetInfo(module=pt % "nfs", class_name="NFSDataset", kwargs=dict()),
     uav=DatasetInfo(module=pt % "uav", class_name="UAVDataset", kwargs=dict()),

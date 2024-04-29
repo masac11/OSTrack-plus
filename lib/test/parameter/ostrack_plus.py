@@ -21,7 +21,7 @@ def parameters(yaml_name: str):
     params.search_size = cfg.TEST.SEARCH_SIZE
 
     # Network checkpoint path
-    params.checkpoint = os.path.join("/data/yinhf/project/OSTrackPlus/output/checkpoints/train/ostrack_plus/fe108_bs32_plus/OSTrackPlusS_ep0140.pth.tar")
+    params.checkpoint = os.path.join("/data/yinhf/project/OSTrackPlus/output/checkpoints/train/ostrack_plus/2_encoder_fusion_fe108_teacher_stack_student_rgb_bs32_plus/OSTrackPlusS_ep0020.pth.tar")
 
     # whether to save boxes from all queries
     params.save_all_boxes = False
